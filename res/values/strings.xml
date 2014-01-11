@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">Mifare Card Resetter</string>
+    <string name="action_settings">Settings</string>
+    <string name="hello_world">Hello world!</string>
+    <string name="overwriteMsg">Tag already in store, do you want to overwrite tag? Only do this if the current card is a fresh, unused card!</string>
+    <string name="loadMsg">No tag in store, save this tag? Only do this if the card is a fresh, unused card!</string>
+    <string name="off">Unlocked</string>
+    <string name="on">Locked</string>
+    <string name="storeFull">Tag in store!</string>
+	<string name="storeEmpty">No tag found in store</string>
+	<string name="stateReady">Scan Tag!</string>
+	<string name="stateFound">Tag Found!</string>
+	<string name="stateUnknown">Not the currently stored tag!</string>
+	<string name="stateRead">Tag loaded to store!</string>
+	<string name="stateWritten">Tag reset!</string>
+	<string name="stateError">Something went wrong..</string>
+    
+</resources>
