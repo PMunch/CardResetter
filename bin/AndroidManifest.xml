@@ -10,7 +10,7 @@
     <uses-feature android:name="android.hardware.nfc" android:required="true"/>
 
     <uses-sdk
-        android:minSdkVersion="10"
+        android:minSdkVersion="11"
         android:targetSdkVersion="18" />
 
     <application
@@ -23,17 +23,9 @@
             android:label="@string/app_name" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-            <!--<intent-filter>
-                <action android:name="android.nfc.action.TECH_DISCOVERED"/>
-            </intent-filter>
-            <meta-data android:name="android.nfc.action.TECH_DISCOVERED"
-    		android:resource="@xml/techlist" />-->
-        </activity>
-        <activity
-            android:name="net.peterme.mifarecardresetter.Write"
-            android:theme="@android:style/Theme.NoDisplay" >
             <intent-filter>
                 <action android:name="android.nfc.action.TECH_DISCOVERED"/>
             </intent-filter>
