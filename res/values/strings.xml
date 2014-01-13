@@ -13,8 +13,11 @@
 	<string name="stateReady">Scan Tag!</string>
 	<string name="stateFound">Tag Found!</string>
 	<string name="stateUnknown">Not the currently stored tag!</string>
+	<string name="stateUnknown_long">The touched tag is not the tag in store. Please touch the right tag or save this one in the app.</string>
 	<string name="stateRead">Tag loaded to store!</string>
-	<string name="stateWritten">Tag reset!</string>
-	<string name="stateError">Something went wrong..</string>
+	<string name="stateWritten_short">Tag reset!</string>
+	<string name="stateWritten">The tag reset to stored tag successfully!</string>
+	<string name="stateError_short">Something went wrong..</string>
+	<string name="stateError">Something went wrong while reseting the tag. Please try again.</string>
     
 </resources>

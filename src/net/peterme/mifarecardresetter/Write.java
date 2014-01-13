@@ -2,23 +2,16 @@ package net.peterme.mifarecardresetter;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.Set;
 
 import android.app.Activity;
 import android.app.Notification;
-import android.app.Notification.Builder;
 import android.app.NotificationManager;
-import android.app.PendingIntent;
 import android.content.Intent;
-import android.content.IntentFilter;
-import android.content.IntentFilter.MalformedMimeTypeException;
 import android.content.SharedPreferences;
-import android.graphics.BitmapFactory;
 import android.nfc.NfcAdapter;
 import android.nfc.Tag;
 import android.nfc.tech.MifareUltralight;
 import android.os.Bundle;
-import android.util.Log;
 
 public class Write extends Activity {
 	private byte[] payload;
@@ -64,23 +57,31 @@ public class Write extends Activity {
 				if (p12==page1214 && p13==page1315 && p14==page1214 && p15==page1315)
 				{
 					noti = new Notification.Builder(this)
-			         .setContentTitle(getString(R.string.stateWritten))
-			         .setContentText("This is some text")
-			         .setSmallIcon(R.drawable.ic_launcher)
+			         .setContentTitle(getString(R.string.stateWritten_short))
+			         .setContentText(getString(R.string.stateWritten))
+			         .setSmallIcon(R.drawable.ic_stat_notify_icon)
 			         .build();
-					Log.d(TAG,"Success!");
 				}else{
 					noti = new Notification.Builder(this)
-			         .setContentTitle(getString(R.string.stateError))
-			         .setContentText("This is some text")
-			         .setSmallIcon(R.drawable.ic_launcher)
+			         .setContentTitle(getString(R.string.stateError_short))
+			         .setContentText(getString(R.string.stateError))
+			         .setSmallIcon(R.drawable.ic_stat_notify_icon)
 			         .build();
-					Log.d(TAG,"Error!");
 				}
-				((NotificationManager) getSystemService(NOTIFICATION_SERVICE)).notify(0,noti);
+			}else{
+				noti = new Notification.Builder(this)
+		         .setContentTitle(getString(R.string.stateUnknown))
+		         .setContentText(getString(R.string.stateUnknown_long))
+		         .setSmallIcon(R.drawable.ic_stat_notify_icon)
+		         .build();
 			}
 		}catch(IOException e){
-			Log.e(TAG,"Error",e);
+			noti = new Notification.Builder(this)
+	         .setContentTitle(getString(R.string.stateError_short))
+	         .setContentText(getString(R.string.stateError))
+	         .setSmallIcon(R.drawable.ic_stat_notify_icon)
+	         .build();
 		}
+		((NotificationManager) getSystemService(NOTIFICATION_SERVICE)).notify(0,noti);
 	}
 }

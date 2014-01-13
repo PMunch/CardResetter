@@ -135,7 +135,7 @@ public class MainActivity extends Activity {
 			else
 				alt_bld.setMessage(R.string.loadMsg);
 			alt_bld.setCancelable(false);
-			alt_bld.setPositiveButton("yes", new OnClickListener() { @Override
+			alt_bld.setPositiveButton("Yes", new OnClickListener() { @Override
 			public void onClick(DialogInterface dialog, int which) {
 				try{
 					mifare.connect();
