@@ -13,6 +13,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.IntentFilter.MalformedMimeTypeException;
 import android.content.SharedPreferences;
+import android.graphics.BitmapFactory;
 import android.nfc.NfcAdapter;
 import android.nfc.Tag;
 import android.nfc.tech.MifareUltralight;
@@ -26,10 +27,6 @@ public class Write extends Activity {
 	private boolean locked;
 	private int page1214;
 	private int page1315;
-	private NfcAdapter mAdapter;
-	private PendingIntent pendingIntent;
-	private IntentFilter[] mFilters;
-	private String[][] mTechLists;
 
 	private SharedPreferences settings;
 	private Notification noti;
@@ -47,34 +44,13 @@ public class Write extends Activity {
 		page1214 = settings.getInt("page1214",0);
 		page1315 = settings.getInt("page1315",0);
 		
-		mAdapter = NfcAdapter.getDefaultAdapter(this);
-		pendingIntent = PendingIntent.getActivity(
-				this, 0, new Intent(this, getClass()).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP), 0);
-
-		// Setup an intent filter for all MIME based dispatches
-		IntentFilter ndef = new IntentFilter(NfcAdapter.ACTION_NDEF_DISCOVERED);
-		try {
-			ndef.addDataType("*/*");
-		} catch (MalformedMimeTypeException e) {
-			throw new RuntimeException("fail", e);
-		}
-		mFilters = new IntentFilter[] {
-				ndef
-		};
-
-		// Setup a tech list for all NfcF tags
-		mTechLists = new String[][] { new String[] { 
-				MifareUltralight.class.getName(),
-		} };
-	}
-	public void onNewIntent(Intent intent){
-		// fetch the tag from the intent
+		Intent intent = this.getIntent();
+		
 		Tag t = (Tag)intent.getParcelableExtra(NfcAdapter.EXTRA_TAG);
-
 		final MifareUltralight mifare = MifareUltralight.get(t);
 		try{
 			mifare.connect();
-			mifare.readPages(0);
+			payload=mifare.readPages(0);
 			if (UID==ByteBuffer.wrap(payload).getLong(0) && locked==true){
 				mifare.writePage(12,ByteBuffer.allocate(4).putInt(page1214).array());
 				mifare.writePage(13,ByteBuffer.allocate(4).putInt(page1315).array());
@@ -89,13 +65,19 @@ public class Write extends Activity {
 				{
 					noti = new Notification.Builder(this)
 			         .setContentTitle(getString(R.string.stateWritten))
-			         .getNotification();
+			         .setContentText("This is some text")
+			         .setSmallIcon(R.drawable.ic_launcher)
+			         .build();
+					Log.d(TAG,"Success!");
 				}else{
 					noti = new Notification.Builder(this)
 			         .setContentTitle(getString(R.string.stateError))
-			         .getNotification();
+			         .setContentText("This is some text")
+			         .setSmallIcon(R.drawable.ic_launcher)
+			         .build();
+					Log.d(TAG,"Error!");
 				}
-				((NotificationManager) getSystemService("NOTIFICATION_SERVICE")).notify(0,noti);
+				((NotificationManager) getSystemService(NOTIFICATION_SERVICE)).notify(0,noti);
 			}
 		}catch(IOException e){
 			Log.e(TAG,"Error",e);
