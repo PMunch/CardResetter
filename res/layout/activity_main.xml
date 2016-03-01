@@ -16,7 +16,8 @@
         android:layout_centerHorizontal="true"
         android:layout_marginTop="78dp"
         android:text="@string/hello_world"
-        android:textSize="40sp" />
+        android:textSize="40sp"
+        android:gravity="center" />
 
     <TextView
         android:id="@+id/tagStatus"
@@ -25,7 +26,8 @@
         android:layout_centerHorizontal="true"
         android:layout_centerVertical="true"
         android:text="Large Text"
-        android:textAppearance="?android:attr/textAppearanceLarge" />
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:gravity="center" />
 
     <ToggleButton
         android:id="@+id/lockStatus"

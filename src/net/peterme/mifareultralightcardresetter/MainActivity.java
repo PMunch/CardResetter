@@ -1,4 +1,4 @@
-package net.peterme.mifarecardresetter;
+package net.peterme.mifareultralightcardresetter;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -31,12 +31,16 @@ public class MainActivity extends Activity {
 	private TextView statusText;
 	private TextView tagStatus;
 	private ToggleButton lockStatus;
+	
+	private TagStore tagStore;
+	private Page[] tag;
+	
 	private byte[] payload;
 	
 	private boolean locked;
-	private long UID;
-	private int page1214;
-	private int page1315;
+	//private long UID;
+	//private int page1214;
+	//private int page1315;
 	
 	private SharedPreferences settings;
 	private SharedPreferences.Editor editor;
@@ -61,13 +65,17 @@ public class MainActivity extends Activity {
 		settings = getSharedPreferences(PREFS,0);
 		editor = settings.edit();
 		locked = settings.getBoolean("locked",false);
+		tagStore = new TagStore(this);
+		tagStore.open();
+		tag = tagStore.getTag();
+		tagStore.close();
 		
-		UID = settings.getLong("UID",0);
-		page1214 = settings.getInt("page1214",0);
-		page1315 = settings.getInt("page1315",0);
+		//UID = settings.getLong("UID",0);
+		//page1214 = settings.getInt("page1214",0);
+		//page1315 = settings.getInt("page1315",0);
 		
 		statusText.setText(R.string.stateReady);
-		if (UID!=0){
+		if (tag.length!=0){ //(UID!=0){
 			tagStatus.setText(R.string.storeFull);
 		}else{
 			tagStatus.setText(R.string.storeEmpty);
@@ -102,9 +110,9 @@ public class MainActivity extends Activity {
 		settings = getSharedPreferences(PREFS,0);
 		editor = settings.edit();
 		locked = settings.getBoolean("locked",false);
-		UID	= settings.getLong("UID",0);
+		/*UID	= settings.getLong("UID",0);
 		page1214 = settings.getInt("page1214",0);
-		page1315 = settings.getInt("page1315",0);
+		page1315 = settings.getInt("page1315",0);*/
 		mAdapter.enableForegroundDispatch(this, pendingIntent, mFilters, mTechLists);
 	}
 
@@ -113,9 +121,9 @@ public class MainActivity extends Activity {
 	{
 		super.onPause();
 		editor.putBoolean("locked",locked);
-		editor.putLong("UID",UID);
-		editor.putInt("page1214",page1214);
-		editor.putInt("page1315",page1315);
+		//editor.putLong("UID",UID);
+		//editor.putInt("page1214",page1214);
+		//editor.putInt("page1315",page1315);
 		editor.commit();
 		mAdapter.disableForegroundDispatch(this);
 	}
@@ -130,7 +138,7 @@ public class MainActivity extends Activity {
 		
 		if (locked==false){
 			alt_bld = new AlertDialog.Builder(this);
-			if (UID!=0)
+			if (tag.length!=0)//(UID!=0)
 				alt_bld.setMessage(R.string.overwriteMsg);
 			else
 				alt_bld.setMessage(R.string.loadMsg);
@@ -139,18 +147,44 @@ public class MainActivity extends Activity {
 			public void onClick(DialogInterface dialog, int which) {
 				try{
 					mifare.connect();
+					Page[] pages= new Page[16];
+					ByteBuffer wrappedPayload;
+					Boolean[] lockbits ={};
+					int pageCount;
+					switch(mifare.getType()){
+						case MifareUltralight.TYPE_ULTRALIGHT:
+							pageCount = 16;
+							break;
+						case MifareUltralight.TYPE_ULTRALIGHT_C:
+							pageCount = 16; //Currently no support for any longer than 16 pages //48;
+							break;
+						default:
+							pageCount = 0;
+					}
 					payload=mifare.readPages(0);
-					UID=ByteBuffer.wrap(payload).getLong(0);
-					payload=mifare.readPages(12);
-					page1214=ByteBuffer.wrap(payload).getInt(0);
-					page1315=ByteBuffer.wrap(payload).getInt(4);
-					Log.i(TAG,"UID: "+Long.toHexString(UID));
-					Log.i(TAG,"Page 12/14: "+Integer.toHexString(page1214));
-					Log.i(TAG,"Page 13/15: "+Integer.toHexString(page1315));
+					wrappedPayload = ByteBuffer.wrap(payload);
+					pages[0]=new Page(true,wrappedPayload.getInt(0));
+					pages[1]=new Page(true,wrappedPayload.getInt(4));
+					lockbits = MifareUltralightLockArray(wrappedPayload.getInt(8));
+					pages[2]=new Page(false,wrappedPayload.getInt(8));
+					pages[3]=new Page(lockbits[0],wrappedPayload.getInt(12));
+					for(int i=4;i<pageCount;i+=4){
+						payload=mifare.readPages(i);
+						wrappedPayload = ByteBuffer.wrap(payload);
+						for(int j=0;j<4;j++)
+							pages[i+j]=new Page(lockbits[i-3+j],wrappedPayload.getInt(j*4));
+					}
+					tagStore.open();
+					tagStore.setTag(pages);
+					logPages(tagStore.getTag());
+					tagStore.close();
 					mifare.close();
 					statusText.setText(R.string.stateRead);
 					tagStatus.setText(R.string.storeFull);
 				}catch (IOException e){
+					Log.e(TAG,"Error",e);
+					statusText.setText(R.string.stateError);
+				}catch (NullPointerException e){
 					Log.e(TAG,"Error",e);
 					statusText.setText(R.string.stateError);
 				}
@@ -164,7 +198,36 @@ public class MainActivity extends Activity {
 			try{
 				mifare.connect();
 				payload=mifare.readPages(0);
-				if (UID==ByteBuffer.wrap(payload).getLong(0)){
+				ByteBuffer wrappedPayload = ByteBuffer.wrap(payload);
+				if(wrappedPayload!=null){
+					tagStore.open();
+					Page[] tag = tagStore.getTag();
+					tagStore.close();
+					if(wrappedPayload.getInt(0)==tag[0].data && wrappedPayload.getInt(4)==tag[1].data){
+						for(int i=3;i<16;i++){
+							if(!tag[i].locked)
+								mifare.writePage(i, ByteBuffer.allocate(4).putInt(tag[i].data).array());
+						}
+						Boolean correct = true;
+						for(int i=0;i<16;i+=4){
+							payload = mifare.readPages(i);
+							wrappedPayload = ByteBuffer.wrap(payload);
+							for(int j=0;j<4;j++){
+								correct = correct && (wrappedPayload.getInt(j*4)==tag[i+j].data);
+							}
+						}
+						if(correct){
+							statusText.setText(R.string.stateWritten);
+						}else{
+							statusText.setText(R.string.stateError);
+						}
+					}else{
+						statusText.setText(R.string.stateUnknown);
+					}
+				}else{
+					statusText.setText(R.string.stateError);
+				}
+				/*if (UID==ByteBuffer.wrap(payload).getLong(0)){
 					mifare.writePage(12,ByteBuffer.allocate(4).putInt(page1214).array());
 					mifare.writePage(13,ByteBuffer.allocate(4).putInt(page1315).array());
 					mifare.writePage(14,ByteBuffer.allocate(4).putInt(page1214).array());
@@ -178,12 +241,30 @@ public class MainActivity extends Activity {
 					{statusText.setText(R.string.stateWritten);}else{statusText.setText(R.string.stateError);}
 				}else{
 					statusText.setText(R.string.stateUnknown);
-				}
+				}*/
 				mifare.close();
 			}catch (IOException e){
 				Log.e(TAG,"Error",e);
 				statusText.setText(R.string.stateError);
 			}
+		}
+	}
+	/* MifareUltralightLockArray
+	 * Converts the Mifare Ultralight lock byte page to an array of booleans from page 3 onwards
+	 * */
+	public Boolean[] MifareUltralightLockArray(int number){
+		Boolean[] booleans=new Boolean[13];
+		for(int i=0;i<5;i++){
+			booleans[i]=(number>>11+i & 1) == 1;
+		}
+		for(int i=0;i<8;i++){
+			booleans[5+i]=(number>>i & 1) == 1;
+		}
+		return booleans;
+	}
+	public void logPages(Page[] pages){
+		for(int i=0;i<pages.length;i++){
+			Log.d(TAG,"Page #"+i+" is "+(pages[i].locked ? "locked" : "un-locked")+ " and contains data "+Integer.toHexString(pages[i].data));
 		}
 	}
 	public void onToggleClicked(View view){
