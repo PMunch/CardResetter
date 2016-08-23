@@ -43,7 +43,7 @@ public class MainActivity extends AppCompatActivity {
         String[] items = new String[cardList.size()];
         cardList.toArray(items);
         ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
-                R.layout.list_item_view, items);
+                android.R.layout.simple_list_item_1, items);
 
         listView1.setAdapter(adapter);
     }
