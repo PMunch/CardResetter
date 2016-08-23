@@ -67,6 +67,8 @@ public class TagStore {
     public TagStore open() throws SQLException{
         helper = new DbHelper(ourContext);
         database = helper.getWritableDatabase();
+        //database.execSQL("DROP TABLE IF EXISTS " + DATABASE_TABLE_CARD);
+        //database.execSQL("DROP TABLE IF EXISTS " + DATABASE_TABLE_PAGE);
         return this;
 
     }
@@ -80,7 +82,7 @@ public class TagStore {
         cv.put(KEY_DESTINATION, destination);
         return database.insert(tagUUID, null, cv);
     }*/
-    public int setTag(Tag tag){
+    public int setTag(TagModel tag){
         //database.execSQL("DROP TABLE IF EXISTS " + DATABASE_TABLE);
         //helper.onCreate(database);
 
@@ -102,7 +104,7 @@ public class TagStore {
 
         return retval;
     }
-    public Tag getTag(long tagid) {
+    public TagModel getTag(long tagid) {
         //Cursor c = database.query(DATABASE_TABLE_CARD, columns, null, null, null, null ,null);
         //String iCardName = c.getColumnIndex(KEY_CARDNAME);
         //long iCardID = c.getColumnIndex(KEY_CARDID);
@@ -124,20 +126,20 @@ public class TagStore {
             for(c.moveToFirst();!c.isAfterLast();c.moveToNext()){
                 pages[c.getPosition()] = new Page(c.getInt(iLocked)==0 ? false : true, c.getInt(iData));
             }
-            return new Tag(name,pages);
+            return new TagModel(name,pages);
         }
         return null;
     }
-    public Tag[] getAllTags(){
+    public TagModel[] getAllTags(){
         Cursor c = database.query(DATABASE_TABLE_CARD, COLUMNS_TAG, null, null, null, null ,null);
-        Tag[] tags = new Tag[c.getColumnCount()];
+        TagModel[] tags = new TagModel[c.getColumnCount()];
         for(c.moveToFirst();!c.isAfterLast();c.moveToNext()){
             Cursor c2 = database.query(DATABASE_TABLE_PAGE, COLUMNS_PAGE, KEY_CARDID + "=?", new String[] {Long.toString(c.getLong(0))}, null, null, KEY_ROWID, null);
             Page[] pages = new Page[16];
             for(c2.moveToFirst();!c2.isAfterLast();c2.moveToNext()){
-                pages[c.getPosition()] = new Page(c.getInt(2)==0 ? false : true, c.getInt(3));
+                pages[c2.getPosition()] = new Page(c2.getInt(2)==0 ? false : true, c2.getInt(3));
             }
-            tags[c.getPosition()] = new Tag(c.getString(0),pages);
+            tags[c.getPosition()] = new TagModel(c.getString(1),pages);
         }
         return tags;
     }

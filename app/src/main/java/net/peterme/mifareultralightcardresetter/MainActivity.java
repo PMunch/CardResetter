@@ -29,7 +29,10 @@ import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Iterator;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -41,6 +44,7 @@ public class MainActivity extends AppCompatActivity {
     private String[][] mTechLists;
     private AlertDialog addTagDialog = null;
     private TagModel currentTag = null;
+    private TagStore tagStore;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -62,7 +66,10 @@ public class MainActivity extends AppCompatActivity {
                 builder.setPositiveButton(getText(R.string.add_complete_button), new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialogInterface, int i) {
-
+                        tagStore.open();
+                        tagStore.setTag(currentTag);
+                        tagStore.close();
+                        addTagDialog.dismiss();
                     }
                 });
                 addTagDialog = builder.create();
@@ -94,6 +101,7 @@ public class MainActivity extends AppCompatActivity {
                         Log.d("Dialog","dismissed!");
                         addTagDialog = null;
                         mAdapter.disableForegroundDispatch(activity);
+                        currentTag = null;
                     }
                 });
                 mAdapter.enableForegroundDispatch(activity, pendingIntent, mFilters, mTechLists);
@@ -102,13 +110,19 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        tagStore = new TagStore(this);
+
         ListView listView1 = (ListView) findViewById(R.id.listView);
 
         ArrayList<String> cardList = new ArrayList<String>();
 
-        // Iterator over those elements
-        for(int i=0;i<15;i++){
-            cardList.add("Item "+i);
+        tagStore.open();
+        TagModel[] tags = tagStore.getAllTags();
+        //logTags(tags);
+        tagStore.close();
+        for(int i=0;i<tags.length;i++){
+            if(tags[i]!=null)
+                cardList.add(tags[i].name);
         }
 
         String[] items = new String[cardList.size()];
@@ -182,20 +196,102 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void onNewIntent(Intent intent) {
         if(addTagDialog!=null){
-            ((TextView)addTagDialog.findViewById(R.id.tagStatus)).setText(getText(R.string.tag_scanned_successfully));
-            ((TextView)addTagDialog.findViewById(R.id.tagStatus)).setCompoundDrawablesWithIntrinsicBounds(getResources().getDrawable(R.drawable.ic_done_black_24dp),null,null,null);
-            if(!((EditText)addTagDialog.findViewById(R.id.editText)).getText().toString().equals("")) {
-                addTagDialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(true);
-            }
             currentTag = new TagModel();
 
             Tag t = (Tag)intent.getParcelableExtra(NfcAdapter.EXTRA_TAG);
 
             final MifareUltralight mifare = MifareUltralight.get(t);
-            
-            //currentTag.setPages();
+            try{
+                mifare.connect();
+                Page[] pages= new Page[16];
+                ByteBuffer wrappedPayload;
+                Boolean[] lockbits ={};
+                int pageCount;
+                switch(mifare.getType()){
+                    case MifareUltralight.TYPE_ULTRALIGHT:
+                        pageCount = 16;
+                        break;
+                    case MifareUltralight.TYPE_ULTRALIGHT_C:
+                        pageCount = 16; //Currently no support for any longer than 16 pages //48;
+                        break;
+                    default:
+                        pageCount = 0;
+                }
+                byte[] payload=mifare.readPages(0);
+                wrappedPayload = ByteBuffer.wrap(payload);
+                pages[0]=new Page(true,wrappedPayload.getInt(0));
+                pages[1]=new Page(true,wrappedPayload.getInt(4));
+                lockbits = MifareUltralightLockArray(wrappedPayload.getInt(8));
+                pages[2]=new Page(false,wrappedPayload.getInt(8));
+                pages[3]=new Page(lockbits[0],wrappedPayload.getInt(12));
+                for(int i=4;i<pageCount;i+=4){
+                    payload=mifare.readPages(i);
+                    wrappedPayload = ByteBuffer.wrap(payload);
+                    for(int j=0;j<4;j++)
+                        pages[i+j]=new Page(lockbits[i-3+j],wrappedPayload.getInt(j*4));
+                }
+                currentTag.setPages(pages);
+                Log.d("TAG","Card id: "+Long.toHexString(currentTag.id));
+                logPages(pages);
+                mifare.close();
+                tagStore.open();
+                if(tagStore.getTag(currentTag.id)==null) {
+                    ((TextView) addTagDialog.findViewById(R.id.tagStatus)).setText(getText(R.string.tag_scanned_successfully));
+                    ((TextView) addTagDialog.findViewById(R.id.tagStatus)).setCompoundDrawablesWithIntrinsicBounds(getResources().getDrawable(R.drawable.ic_done_black_24dp), null, null, null);
+                    if (!((EditText) addTagDialog.findViewById(R.id.editText)).getText().toString().equals("")) {
+                        currentTag.setName(((EditText) addTagDialog.findViewById(R.id.editText)).getText().toString());
+                        addTagDialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(true);
+                    }
+                }else{
+                    ((TextView)addTagDialog.findViewById(R.id.tagStatus)).setText(getText(R.string.tag_scanned_duplicate));
+                    ((TextView)addTagDialog.findViewById(R.id.tagStatus)).setCompoundDrawablesWithIntrinsicBounds(getResources().getDrawable(R.drawable.ic_tap_and_play_black_24dp),null,null,null);
+                    addTagDialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(false);
+                    currentTag = null;
+                }
+                tagStore.close();
+            }catch (IOException e){
+                Log.e("TAG","Error",e);
+                ((TextView)addTagDialog.findViewById(R.id.tagStatus)).setText(getText(R.string.tag_scanned_error));
+                ((TextView)addTagDialog.findViewById(R.id.tagStatus)).setCompoundDrawablesWithIntrinsicBounds(getResources().getDrawable(R.drawable.ic_tap_and_play_black_24dp),null,null,null);
+                addTagDialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(false);
+                currentTag = null;
+            }catch (NullPointerException e){
+                Log.e("TAG","Error",e);
+                ((TextView)addTagDialog.findViewById(R.id.tagStatus)).setText(getText(R.string.tag_scanned_error));
+                ((TextView)addTagDialog.findViewById(R.id.tagStatus)).setCompoundDrawablesWithIntrinsicBounds(getResources().getDrawable(R.drawable.ic_tap_and_play_black_24dp),null,null,null);
+                addTagDialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(false);
+                currentTag = null;
+            }
         }else{
             Log.d("Intent","Somethings not right");
+        }
+    }
+
+    public Boolean[] MifareUltralightLockArray(int number){
+        Boolean[] booleans=new Boolean[13];
+        for(int i=0;i<5;i++){
+            booleans[i]=(number>>11+i & 1) == 1;
+        }
+        for(int i=0;i<8;i++){
+            booleans[5+i]=(number>>i & 1) == 1;
+        }
+        return booleans;
+    }
+
+    public void logPages(Page[] pages){
+        for(int i=0;i<pages.length;i++){
+            Log.d("TAG","Page #"+i+" is "+(pages[i].locked ? "locked" : "un-locked")+ " and contains data "+Integer.toHexString(pages[i].data));
+        }
+    }
+    public void logTags(TagModel[] tags){
+        Log.d("TAG","Dump of all tags:");
+        for(int ii=0;ii<tags.length;ii++){
+            Log.d("TAG","Tag "+ii);
+            if(tags[ii]!=null) {
+                Log.d("TAG", "name: " + tags[ii].name);
+                Log.d("TAG", "id: " + Long.toHexString(tags[ii].id));
+                logPages(tags[ii].pages);
+            }
         }
     }
 }
