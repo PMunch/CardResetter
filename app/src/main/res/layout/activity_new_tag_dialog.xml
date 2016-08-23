@@ -13,7 +13,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:textAppearance="?android:attr/textAppearanceLarge"
-        android:text="Please enter a name for the tag and touch the tag to your device"
+        android:text="@string/enter_name_touch_tag_prompt"
         android:id="@+id/textView" />
 
     <EditText
@@ -29,7 +29,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textAppearance="?android:attr/textAppearanceLarge"
-        android:text="No tag detected"
+        android:text="@string/no_tag_detected"
         android:id="@+id/textView2"
         android:layout_marginTop="20dp"
         android:drawablePadding="10dp"
@@ -37,5 +37,4 @@
         android:layout_gravity="center_vertical"
         android:layout_below="@+id/editText"
         android:layout_centerHorizontal="true" />
-
 </RelativeLayout>
