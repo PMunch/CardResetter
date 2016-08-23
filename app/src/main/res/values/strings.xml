@@ -8,4 +8,14 @@
     <string name="tag_scanned_successfully">Tag scanned successfully</string>
     <string name="tag_scanned_error">An error occurred while scanning the tag</string>
     <string name="tag_scanned_duplicate">Scanned tag already stored</string>
+    <string name="touch_tag_to_rewrite">Please touch the tag to rewrite</string>
+    <string name="tag_rewrite_success">The tag was rewritten successfully</string>
+    <string name="tag_rewrite_error">Error rewriting tag, please try again</string>
+    <string name="tag_rewrite_notsame">Touched tag not the same as stored tag</string>
+    <string name="state_written_short">Tag reset!</string>
+    <string name="state_written">The tag reset to stored tag successfully!</string>
+    <string name="state_error_short">Something went wrong..</string>
+    <string name="state_error">Something went wrong while resetting the tag. Please try again</string>
+    <string name="state_unknown_short">Not the currently stored tag!</string>
+    <string name="state_unknown">The touched tag is not the tag in store. Please touch the right tag or save this one in the app.</string>
 </resources>

@@ -19,7 +19,17 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".NewTagDialog"></activity>
+        <activity
+            android:name="net.peterme.mifareultralightcardresetter.RewriteActivity"
+            android:excludeFromRecents="true"
+            android:theme="@android:style/Theme.NoDisplay"
+            android:noHistory="true">
+            <intent-filter>
+                <action android:name="android.nfc.action.TECH_DISCOVERED"/>
+            </intent-filter>
+            <meta-data android:name="android.nfc.action.TECH_DISCOVERED"
+                android:resource="@xml/techlist" />
+        </activity>
     </application>
 
 </manifest>

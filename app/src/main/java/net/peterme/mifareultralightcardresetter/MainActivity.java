@@ -23,6 +23,7 @@ import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.WindowManager;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
@@ -43,6 +44,9 @@ public class MainActivity extends AppCompatActivity {
     private IntentFilter[] mFilters;
     private String[][] mTechLists;
     private AlertDialog addTagDialog = null;
+    private AlertDialog rewriteTagDialog = null;
+    private  ListView listView;
+    private TagModel[] tags;
     private TagModel currentTag = null;
     private TagStore tagStore;
     @Override
@@ -68,6 +72,7 @@ public class MainActivity extends AppCompatActivity {
                     public void onClick(DialogInterface dialogInterface, int i) {
                         tagStore.open();
                         tagStore.setTag(currentTag);
+                        populateTagsList();
                         tagStore.close();
                         addTagDialog.dismiss();
                     }
@@ -112,25 +117,56 @@ public class MainActivity extends AppCompatActivity {
 
         tagStore = new TagStore(this);
 
-        ListView listView1 = (ListView) findViewById(R.id.listView);
-
-        ArrayList<String> cardList = new ArrayList<String>();
+        listView = (ListView) findViewById(R.id.listView);
 
         tagStore.open();
-        TagModel[] tags = tagStore.getAllTags();
-        //logTags(tags);
+        populateTagsList();
         tagStore.close();
-        for(int i=0;i<tags.length;i++){
-            if(tags[i]!=null)
-                cardList.add(tags[i].name);
-        }
 
-        String[] items = new String[cardList.size()];
-        cardList.toArray(items);
-        ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
-                android.R.layout.simple_list_item_1, items);
-
-        listView1.setAdapter(adapter);
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+                Log.d("Dialog","Item selected!");
+                AlertDialog.Builder builder = new AlertDialog.Builder(context);
+                builder.setView(R.layout.activity_rewrite_tag_dialog);
+                rewriteTagDialog = builder.create();
+                rewriteTagDialog.show();
+                rewriteTagDialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
+                    @Override
+                    public void onDismiss(DialogInterface dialogInterface) {
+                        Log.d("Dialog","dismissed!");
+                        rewriteTagDialog = null;
+                        currentTag = null;
+                        mAdapter.disableForegroundDispatch(activity);
+                    }
+                });
+                currentTag = tags[i];
+                mAdapter.enableForegroundDispatch(activity, pendingIntent, mFilters, mTechLists);
+            }
+        });
+        listView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+            @Override
+            public boolean onItemLongClick(AdapterView<?> adapterView, View view, final int i, long l) {
+                AlertDialog.Builder builder = new AlertDialog.Builder(context);
+                builder.setTitle("Do you wish to delete '"+tags[i].name+"'?");
+                builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int o) {
+                        tagStore.open();
+                        tagStore.deleteTag(tags[i].id);
+                        populateTagsList();
+                        tagStore.close();
+                    }
+                });
+                builder.setNegativeButton("No",new DialogInterface.OnClickListener(){
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                    }
+                });
+                builder.create().show();
+                return true;
+            }
+        });
 
         initNFC();
     }
@@ -150,9 +186,9 @@ public class MainActivity extends AppCompatActivity {
         int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
+        /*if (id == R.id.action_settings) {
             return true;
-        }
+        }*/
 
         return super.onOptionsItemSelected(item);
     }
@@ -195,12 +231,12 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public void onNewIntent(Intent intent) {
+        Tag t = (Tag)intent.getParcelableExtra(NfcAdapter.EXTRA_TAG);
+        final MifareUltralight mifare = MifareUltralight.get(t);
+
         if(addTagDialog!=null){
             currentTag = new TagModel();
 
-            Tag t = (Tag)intent.getParcelableExtra(NfcAdapter.EXTRA_TAG);
-
-            final MifareUltralight mifare = MifareUltralight.get(t);
             try{
                 mifare.connect();
                 PageModel[] pages= new PageModel[16];
@@ -262,6 +298,49 @@ public class MainActivity extends AppCompatActivity {
                 addTagDialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(false);
                 currentTag = null;
             }
+        }else if(rewriteTagDialog!=null) {
+            try{
+                mifare.connect();
+                byte[] payload = mifare.readPages(0);
+                ByteBuffer wrappedPayload = ByteBuffer.wrap(payload);
+                if(wrappedPayload!=null){
+                    long scannedId = wrappedPayload.getInt(0);
+                    scannedId = scannedId << 4*8;
+                    scannedId = scannedId | wrappedPayload.getInt(4);
+                    if(scannedId == currentTag.id){
+                        for(int i=3;i<16;i++){
+                            if(!currentTag.pages[i].locked)
+                                mifare.writePage(i, ByteBuffer.allocate(4).putInt(currentTag.pages[i].data).array());
+                        }
+                        Boolean correct = true;
+                        for(int i=0;i<16;i+=4){
+                            payload = mifare.readPages(i);
+                            wrappedPayload = ByteBuffer.wrap(payload);
+                            for(int j=0;j<4;j++){
+                                correct = correct && (wrappedPayload.getInt(j*4)==currentTag.pages[i+j].data);
+                            }
+                        }
+                        if(correct){
+                            ((TextView) rewriteTagDialog.findViewById(R.id.tagStatus)).setText(getText(R.string.tag_rewrite_success));
+                            ((TextView) rewriteTagDialog.findViewById(R.id.tagStatus)).setCompoundDrawablesWithIntrinsicBounds(getResources().getDrawable(R.drawable.ic_done_black_24dp), null, null, null);
+                        }else{
+                            ((TextView) rewriteTagDialog.findViewById(R.id.tagStatus)).setText(getText(R.string.tag_rewrite_error));
+                            ((TextView) rewriteTagDialog.findViewById(R.id.tagStatus)).setCompoundDrawablesWithIntrinsicBounds(getResources().getDrawable(R.drawable.ic_tap_and_play_black_24dp), null, null, null);
+                        }
+                    }else{
+                        ((TextView) rewriteTagDialog.findViewById(R.id.tagStatus)).setText(getText(R.string.tag_rewrite_notsame));
+                        ((TextView) rewriteTagDialog.findViewById(R.id.tagStatus)).setCompoundDrawablesWithIntrinsicBounds(getResources().getDrawable(R.drawable.ic_tap_and_play_black_24dp), null, null, null);
+                    }
+                }else{
+                    ((TextView) rewriteTagDialog.findViewById(R.id.tagStatus)).setText(getText(R.string.tag_rewrite_error));
+                    ((TextView) rewriteTagDialog.findViewById(R.id.tagStatus)).setCompoundDrawablesWithIntrinsicBounds(getResources().getDrawable(R.drawable.ic_tap_and_play_black_24dp), null, null, null);
+                }
+                mifare.close();
+            }catch (IOException e){
+                ((TextView) rewriteTagDialog.findViewById(R.id.tagStatus)).setText(getText(R.string.tag_rewrite_error));
+                ((TextView) rewriteTagDialog.findViewById(R.id.tagStatus)).setCompoundDrawablesWithIntrinsicBounds(getResources().getDrawable(R.drawable.ic_tap_and_play_black_24dp), null, null, null);
+            }
+
         }else{
             Log.d("Intent","Somethings not right");
         }
@@ -293,5 +372,20 @@ public class MainActivity extends AppCompatActivity {
                 logPages(tags[ii].pages);
             }
         }
+    }
+    public void populateTagsList(){
+        tags = tagStore.getAllTags();
+        ArrayList<String> cardList = new ArrayList<String>();
+
+        for(int i=0;i<tags.length;i++){
+            if(tags[i]!=null)
+                cardList.add(tags[i].name);
+        }
+        String[] items = new String[cardList.size()];
+        cardList.toArray(items);
+        ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
+                android.R.layout.simple_list_item_1, items);
+
+        listView.setAdapter(adapter);
     }
 }

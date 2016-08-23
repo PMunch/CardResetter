@@ -141,7 +141,8 @@ public class TagStore {
         }
         return tags;
     }
-	/*public void deleteEntry(int row) {
-		database.delete(DATABASE_TABLE, KEY_ROWID+"="+row, null);
-	}*/
+	public void deleteTag(long tagId) {
+		database.delete(DATABASE_TABLE_PAGE, KEY_CARDID+"=?", new String[] {Long.toString(tagId)});
+        database.delete(DATABASE_TABLE_CARD, KEY_CARDID+"=?", new String[] {Long.toString(tagId)});
+	}
 }
