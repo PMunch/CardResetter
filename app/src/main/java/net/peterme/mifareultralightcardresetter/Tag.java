@@ -7,8 +7,8 @@ public class Tag {
     public String name;
     public Tag(String name, Page[] pages){
         this.id = pages[0].data;
-        this.id = this.id << 4;
-        this.id = this.id & pages[1].data;
+        this.id = this.id << 4*8;
+        this.id = this.id | pages[1].data;
         this.pages = pages;
         this.name = name;
     }

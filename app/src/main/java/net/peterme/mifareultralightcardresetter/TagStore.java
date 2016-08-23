@@ -16,7 +16,8 @@ public class TagStore {
     public static final String KEY_ROWID = "_id";
     public static final String KEY_LOCKED = "locked";
     public static final String KEY_DATA = "data";
-    public static final String[] columns ={KEY_CARDID,KEY_ROWID,KEY_LOCKED,KEY_DATA};
+    public static final String[] COLUMNS_PAGE ={KEY_CARDID,KEY_ROWID,KEY_LOCKED,KEY_DATA};
+    public static final String[] COLUMNS_TAG ={KEY_CARDID,KEY_CARDNAME};
 
     private static final String DATABASE_NAME = "TagDB";
 
@@ -101,20 +102,44 @@ public class TagStore {
 
         return retval;
     }
-    public Page[] getTag() {
-        Cursor c = database.query(DATABASE_TABLE_CARD, columns, null, null, null, null ,null);
-        
+    public Tag getTag(long tagid) {
+        //Cursor c = database.query(DATABASE_TABLE_CARD, columns, null, null, null, null ,null);
+        //String iCardName = c.getColumnIndex(KEY_CARDNAME);
+        //long iCardID = c.getColumnIndex(KEY_CARDID);
+        Cursor c = database.query(DATABASE_TABLE_CARD, COLUMNS_TAG, KEY_CARDID + "=?", new String[] {Long.toString(tagid)}, null, null, null, null);
 
-
-
-        Cursor c = database.query(DATABASE_TABLE, columns, null,null,null,null,null);
-        Page[] returnTag = new Page[16];
-        int iLocked = c.getColumnIndex(KEY_LOCKED);
-        int iData = c.getColumnIndex(KEY_DATA);
-        for(c.moveToFirst();!c.isAfterLast();c.moveToNext()){
-            returnTag[c.getPosition()]=new Page(c.getInt(iLocked)==0 ? false : true, c.getInt(iData));
+        String name = null;
+        if (c.moveToFirst()) {
+            /*contact = new Contact(Integer.parseInt(cursor.getString(0)),
+                    cursor.getString(1), cursor.getString(2));*/
+            name = c.getString(1);
         }
-        return returnTag;
+        c.close();
+
+        if(name!=null){
+            Page[] pages = new Page[16];
+            c = database.query(DATABASE_TABLE_PAGE, COLUMNS_PAGE, KEY_CARDID + "=?", new String[] {Long.toString(tagid)}, null, null, KEY_ROWID, null);
+            int iLocked = c.getColumnIndex(KEY_LOCKED);
+            int iData = c.getColumnIndex(KEY_DATA);
+            for(c.moveToFirst();!c.isAfterLast();c.moveToNext()){
+                pages[c.getPosition()] = new Page(c.getInt(iLocked)==0 ? false : true, c.getInt(iData));
+            }
+            return new Tag(name,pages);
+        }
+        return null;
+    }
+    public Tag[] getAllTags(){
+        Cursor c = database.query(DATABASE_TABLE_CARD, COLUMNS_TAG, null, null, null, null ,null);
+        Tag[] tags = new Tag[c.getColumnCount()];
+        for(c.moveToFirst();!c.isAfterLast();c.moveToNext()){
+            Cursor c2 = database.query(DATABASE_TABLE_PAGE, COLUMNS_PAGE, KEY_CARDID + "=?", new String[] {Long.toString(c.getLong(0))}, null, null, KEY_ROWID, null);
+            Page[] pages = new Page[16];
+            for(c2.moveToFirst();!c2.isAfterLast();c2.moveToNext()){
+                pages[c.getPosition()] = new Page(c.getInt(2)==0 ? false : true, c.getInt(3));
+            }
+            tags[c.getPosition()] = new Tag(c.getString(0),pages);
+        }
+        return tags;
     }
 	/*public void deleteEntry(int row) {
 		database.delete(DATABASE_TABLE, KEY_ROWID+"="+row, null);
