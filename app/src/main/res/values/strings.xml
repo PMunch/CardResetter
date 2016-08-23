@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">NFC Card Reset</string>
+    <string name="app_name">MIFARE Ultralight® card resetter</string>
     <string name="action_settings">Settings</string>
     <string name="add_complete_button">Store tag</string>
     <string name="enter_name_touch_tag_prompt">Please enter a name for the tag and touch the tag to your device</string>

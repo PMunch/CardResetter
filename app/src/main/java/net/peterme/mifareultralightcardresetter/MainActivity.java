@@ -1,7 +1,6 @@
 package net.peterme.mifareultralightcardresetter;
 
 import android.app.Activity;
-import android.app.Dialog;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -12,7 +11,6 @@ import android.nfc.tech.MifareUltralight;
 import android.nfc.Tag;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -25,7 +23,6 @@ import android.view.MenuItem;
 import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -33,7 +30,6 @@ import android.widget.TextView;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.Iterator;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -56,6 +52,8 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+        getSupportActionBar().setDisplayShowHomeEnabled(true);
+        getSupportActionBar().setIcon(R.mipmap.ic_launcher);
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
@@ -126,7 +124,7 @@ public class MainActivity extends AppCompatActivity {
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-                Log.d("Dialog","Item selected!");
+                Log.d("Dialog","Item selected! ");
                 AlertDialog.Builder builder = new AlertDialog.Builder(context);
                 builder.setView(R.layout.activity_rewrite_tag_dialog);
                 rewriteTagDialog = builder.create();
@@ -384,7 +382,7 @@ public class MainActivity extends AppCompatActivity {
         String[] items = new String[cardList.size()];
         cardList.toArray(items);
         ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
-                android.R.layout.simple_list_item_1, items);
+                R.layout.simple_list_item_1, items);
 
         listView.setAdapter(adapter);
     }

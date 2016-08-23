@@ -52,10 +52,41 @@ public class TagStore {
         @Override
         public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
             // TODO: Write proper update migration!!
-            db.execSQL("DROP TABLE IF EXISTS " + DATABASE_TABLE_CARD);
-            db.execSQL("DROP TABLE IF EXISTS " + DATABASE_TABLE_PAGE);
-            Log.d("upgrade","SQL table drops on upgrade");
-            onCreate(db);
+            //db.execSQL("DROP TABLE IF EXISTS " + DATABASE_TABLE_CARD);
+            //db.execSQL("DROP TABLE IF EXISTS " + DATABASE_TABLE_PAGE);
+            //Log.d("upgrade","SQL table drops on upgrade");
+            // onCreate(db);
+            try {
+                Cursor c = db.query("TagTable", new String[]{"_id", "locked", "data"}, null, null, null, null, null);
+                PageModel[] pages = new PageModel[16];
+                int iLocked = c.getColumnIndex("locked");
+                int iData = c.getColumnIndex("data");
+                for (c.moveToFirst(); !c.isAfterLast(); c.moveToNext()) {
+                    pages[c.getPosition()] = new PageModel(c.getInt(iLocked) == 0 ? false : true, c.getInt(iData));
+                }
+                TagModel tag = new TagModel("Tag", pages);
+                db.execSQL("DROP TABLE IF EXISTS TagTable");
+                onCreate(db);
+
+                ContentValues cv = new ContentValues();
+                for (int i = 0; i < tag.pages.length; i++) {
+                    cv.clear();
+                    cv.put(KEY_LOCKED, tag.pages[i].locked);
+                    cv.put(KEY_DATA, tag.pages[i].data);
+                    cv.put(KEY_CARDID, tag.id);
+                    db.insert(DATABASE_TABLE_PAGE, null, cv);
+                }
+
+                cv.clear();
+                cv.put(KEY_CARDID, tag.id);
+                cv.put(KEY_CARDNAME, tag.name);
+                db.insert(DATABASE_TABLE_CARD, null, cv);
+            }catch (SQLException e){
+                db.execSQL("DROP TABLE IF EXISTS TagTable");
+                db.execSQL("DROP TABLE IF EXISTS " + DATABASE_TABLE_CARD);
+                db.execSQL("DROP TABLE IF EXISTS " + DATABASE_TABLE_PAGE);
+                onCreate(db);
+            }
         }
 
     }
