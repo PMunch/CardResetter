@@ -15,6 +15,8 @@ import android.support.design.widget.Snackbar;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.View;
 import android.view.Menu;
@@ -22,6 +24,7 @@ import android.view.MenuItem;
 import android.view.WindowManager;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
 
@@ -64,6 +67,24 @@ public class MainActivity extends AppCompatActivity {
 
                 addTagDialog.show();
                 addTagDialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(false);
+                ((EditText)addTagDialog.findViewById(R.id.editText)).addTextChangedListener(new TextWatcher() {
+                    @Override
+                    public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {}
+                    @Override
+                    public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {}
+
+                    @Override
+                    public void afterTextChanged(Editable editable) {
+                        if(((TextView)addTagDialog.findViewById(R.id.tagStatus)).getText().toString().equals(getText(R.string.tag_scanned_successfully))){
+                            if(editable.toString().equals("")){
+                                addTagDialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(false);
+                            }else{
+                                addTagDialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(true);
+                            }
+                        }
+                    }
+                });
+
                 addTagDialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
                     @Override
                     public void onDismiss(DialogInterface dialogInterface) {
@@ -158,8 +179,11 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void onNewIntent(Intent intent) {
         if(addTagDialog!=null){
-            ((TextView)addTagDialog.findViewById(R.id.tagStatus)).setText("Tag detected");
+            ((TextView)addTagDialog.findViewById(R.id.tagStatus)).setText(getText(R.string.tag_scanned_successfully));
             ((TextView)addTagDialog.findViewById(R.id.tagStatus)).setCompoundDrawablesWithIntrinsicBounds(getResources().getDrawable(R.drawable.ic_done_black_24dp),null,null,null);
+            if(!((EditText)addTagDialog.findViewById(R.id.editText)).getText().toString().equals("")){
+                addTagDialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(true);
+            }
         }else{
             Log.d("Intent","Somethings not right");
         }
