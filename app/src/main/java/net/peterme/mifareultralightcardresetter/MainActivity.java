@@ -1,29 +1,45 @@
 package net.peterme.mifareultralightcardresetter;
 
+import android.app.Activity;
 import android.app.Dialog;
+import android.app.PendingIntent;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.nfc.NfcAdapter;
+import android.nfc.tech.MifareUltralight;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.WindowManager;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
+import android.widget.TextView;
 
 import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
 
     final Context context = this;
+    final Activity activity = this;
+    private NfcAdapter mAdapter;
+    private PendingIntent pendingIntent;
+    private IntentFilter[] mFilters;
+    private String[][] mTechLists;
+    private AlertDialog addTagDialog = null;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -44,13 +60,21 @@ public class MainActivity extends AppCompatActivity {
 
                     }
                 });
-                AlertDialog dialog = builder.create();
+                addTagDialog = builder.create();
 
-                dialog.show();
-                dialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(false);
-
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
+                addTagDialog.show();
+                addTagDialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(false);
+                addTagDialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
+                    @Override
+                    public void onDismiss(DialogInterface dialogInterface) {
+                        Log.d("Dialog","dismissed!");
+                        addTagDialog = null;
+                        mAdapter.disableForegroundDispatch(activity);
+                    }
+                });
+                mAdapter.enableForegroundDispatch(activity, pendingIntent, mFilters, mTechLists);
+                /*Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
+                        .setAction("Action", null).show();*/
             }
         });
 
@@ -69,6 +93,8 @@ public class MainActivity extends AppCompatActivity {
                 android.R.layout.simple_list_item_1, items);
 
         listView1.setAdapter(adapter);
+
+        initNFC();
     }
 
     @Override
@@ -91,5 +117,51 @@ public class MainActivity extends AppCompatActivity {
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    public void initNFC(){
+        mAdapter = NfcAdapter.getDefaultAdapter(this);
+        pendingIntent = PendingIntent.getActivity(
+                this, 0, new Intent(this, getClass()).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP), 0);
+
+        // Setup an intent filter for all MIME based dispatches
+        IntentFilter ndef = new IntentFilter(NfcAdapter.ACTION_NDEF_DISCOVERED);
+        try {
+            ndef.addDataType("*/*");
+        } catch (IntentFilter.MalformedMimeTypeException e) {
+            throw new RuntimeException("fail", e);
+        }
+        mFilters = new IntentFilter[] {
+                ndef
+        };
+
+        // Setup a tech list for all NfcF tags
+        mTechLists = new String[][] { new String[] {
+                MifareUltralight.class.getName(),
+        } };
+    }
+
+    @Override
+    public void onResume()
+    {
+        super.onResume();
+        mAdapter.enableForegroundDispatch(this, pendingIntent, mFilters, mTechLists);
+    }
+
+    @Override
+    public void onPause()
+    {
+        super.onPause();
+        mAdapter.disableForegroundDispatch(this);
+    }
+
+    @Override
+    public void onNewIntent(Intent intent) {
+        if(addTagDialog!=null){
+            ((TextView)addTagDialog.findViewById(R.id.tagStatus)).setText("Tag detected");
+            ((TextView)addTagDialog.findViewById(R.id.tagStatus)).setCompoundDrawablesWithIntrinsicBounds(getResources().getDrawable(R.drawable.ic_done_black_24dp),null,null,null);
+        }else{
+            Log.d("Intent","Somethings not right");
+        }
     }
 }
