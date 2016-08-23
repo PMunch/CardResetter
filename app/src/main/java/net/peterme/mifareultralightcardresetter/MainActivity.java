@@ -2,9 +2,11 @@ package net.peterme.mifareultralightcardresetter;
 
 import android.app.Dialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.View;
@@ -31,20 +33,21 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
 
-                final Dialog dialog = new Dialog(context);
-                dialog.setContentView(R.layout.activity_new_tag_dialog);
-                dialog.setTitle("Title...");
-
-                /*Button dialogButton = (Button) dialog.findViewById(R.id.dialogButtonOK);
-                // if button is clicked, close the custom dialog
-                dialogButton.setOnClickListener(new OnClickListener() {
+                //final Dialog dialog = new Dialog(context);
+                //dialog.setContentView(R.layout.activity_new_tag_dialog);
+                //dialog.setTitle("Title...");
+                AlertDialog.Builder builder = new AlertDialog.Builder(context);
+                builder.setView(R.layout.activity_new_tag_dialog);
+                builder.setPositiveButton(getText(R.string.add_complete_button), new DialogInterface.OnClickListener() {
                     @Override
-                    public void onClick(View v) {
-                        dialog.dismiss();
+                    public void onClick(DialogInterface dialogInterface, int i) {
+
                     }
-                });*/
+                });
+                AlertDialog dialog = builder.create();
 
                 dialog.show();
+                dialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(false);
 
                 Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
                         .setAction("Action", null).show();
