@@ -9,6 +9,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.nfc.NfcAdapter;
 import android.nfc.tech.MifareUltralight;
+import android.nfc.Tag;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
@@ -39,6 +40,7 @@ public class MainActivity extends AppCompatActivity {
     private IntentFilter[] mFilters;
     private String[][] mTechLists;
     private AlertDialog addTagDialog = null;
+    private TagModel currentTag = null;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -75,12 +77,13 @@ public class MainActivity extends AppCompatActivity {
 
                     @Override
                     public void afterTextChanged(Editable editable) {
-                        if(((TextView)addTagDialog.findViewById(R.id.tagStatus)).getText().toString().equals(getText(R.string.tag_scanned_successfully))){
-                            if(editable.toString().equals("")){
+                        if(currentTag!=null) {
+                            if (editable.toString().equals("")) {
                                 addTagDialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(false);
-                            }else{
+                            } else {
                                 addTagDialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(true);
                             }
+                            currentTag.setName(editable.toString());
                         }
                     }
                 });
@@ -181,9 +184,16 @@ public class MainActivity extends AppCompatActivity {
         if(addTagDialog!=null){
             ((TextView)addTagDialog.findViewById(R.id.tagStatus)).setText(getText(R.string.tag_scanned_successfully));
             ((TextView)addTagDialog.findViewById(R.id.tagStatus)).setCompoundDrawablesWithIntrinsicBounds(getResources().getDrawable(R.drawable.ic_done_black_24dp),null,null,null);
-            if(!((EditText)addTagDialog.findViewById(R.id.editText)).getText().toString().equals("")){
+            if(!((EditText)addTagDialog.findViewById(R.id.editText)).getText().toString().equals("")) {
                 addTagDialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(true);
             }
+            currentTag = new TagModel();
+
+            Tag t = (Tag)intent.getParcelableExtra(NfcAdapter.EXTRA_TAG);
+
+            final MifareUltralight mifare = MifareUltralight.get(t);
+            
+            //currentTag.setPages();
         }else{
             Log.d("Intent","Somethings not right");
         }
