@@ -203,7 +203,7 @@ public class MainActivity extends AppCompatActivity {
             final MifareUltralight mifare = MifareUltralight.get(t);
             try{
                 mifare.connect();
-                Page[] pages= new Page[16];
+                PageModel[] pages= new PageModel[16];
                 ByteBuffer wrappedPayload;
                 Boolean[] lockbits ={};
                 int pageCount;
@@ -219,16 +219,16 @@ public class MainActivity extends AppCompatActivity {
                 }
                 byte[] payload=mifare.readPages(0);
                 wrappedPayload = ByteBuffer.wrap(payload);
-                pages[0]=new Page(true,wrappedPayload.getInt(0));
-                pages[1]=new Page(true,wrappedPayload.getInt(4));
+                pages[0]=new PageModel(true,wrappedPayload.getInt(0));
+                pages[1]=new PageModel(true,wrappedPayload.getInt(4));
                 lockbits = MifareUltralightLockArray(wrappedPayload.getInt(8));
-                pages[2]=new Page(false,wrappedPayload.getInt(8));
-                pages[3]=new Page(lockbits[0],wrappedPayload.getInt(12));
+                pages[2]=new PageModel(false,wrappedPayload.getInt(8));
+                pages[3]=new PageModel(lockbits[0],wrappedPayload.getInt(12));
                 for(int i=4;i<pageCount;i+=4){
                     payload=mifare.readPages(i);
                     wrappedPayload = ByteBuffer.wrap(payload);
                     for(int j=0;j<4;j++)
-                        pages[i+j]=new Page(lockbits[i-3+j],wrappedPayload.getInt(j*4));
+                        pages[i+j]=new PageModel(lockbits[i-3+j],wrappedPayload.getInt(j*4));
                 }
                 currentTag.setPages(pages);
                 Log.d("TAG","Card id: "+Long.toHexString(currentTag.id));
@@ -278,7 +278,7 @@ public class MainActivity extends AppCompatActivity {
         return booleans;
     }
 
-    public void logPages(Page[] pages){
+    public void logPages(PageModel[] pages){
         for(int i=0;i<pages.length;i++){
             Log.d("TAG","Page #"+i+" is "+(pages[i].locked ? "locked" : "un-locked")+ " and contains data "+Integer.toHexString(pages[i].data));
         }

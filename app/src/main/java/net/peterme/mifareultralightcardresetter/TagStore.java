@@ -1,7 +1,5 @@
 package net.peterme.mifareultralightcardresetter;
 
-import java.util.ArrayList;
-
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
@@ -119,12 +117,12 @@ public class TagStore {
         c.close();
 
         if(name!=null){
-            Page[] pages = new Page[16];
+            PageModel[] pages = new PageModel[16];
             c = database.query(DATABASE_TABLE_PAGE, COLUMNS_PAGE, KEY_CARDID + "=?", new String[] {Long.toString(tagid)}, null, null, KEY_ROWID, null);
             int iLocked = c.getColumnIndex(KEY_LOCKED);
             int iData = c.getColumnIndex(KEY_DATA);
             for(c.moveToFirst();!c.isAfterLast();c.moveToNext()){
-                pages[c.getPosition()] = new Page(c.getInt(iLocked)==0 ? false : true, c.getInt(iData));
+                pages[c.getPosition()] = new PageModel(c.getInt(iLocked)==0 ? false : true, c.getInt(iData));
             }
             return new TagModel(name,pages);
         }
@@ -135,9 +133,9 @@ public class TagStore {
         TagModel[] tags = new TagModel[c.getColumnCount()];
         for(c.moveToFirst();!c.isAfterLast();c.moveToNext()){
             Cursor c2 = database.query(DATABASE_TABLE_PAGE, COLUMNS_PAGE, KEY_CARDID + "=?", new String[] {Long.toString(c.getLong(0))}, null, null, KEY_ROWID, null);
-            Page[] pages = new Page[16];
+            PageModel[] pages = new PageModel[16];
             for(c2.moveToFirst();!c2.isAfterLast();c2.moveToNext()){
-                pages[c2.getPosition()] = new Page(c2.getInt(2)==0 ? false : true, c2.getInt(3));
+                pages[c2.getPosition()] = new PageModel(c2.getInt(2)==0 ? false : true, c2.getInt(3));
             }
             tags[c.getPosition()] = new TagModel(c.getString(1),pages);
         }

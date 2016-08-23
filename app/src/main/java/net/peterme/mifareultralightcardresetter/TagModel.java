@@ -3,9 +3,9 @@ package net.peterme.mifareultralightcardresetter;
 
 public class TagModel {
     public long id;
-    public Page[] pages;
+    public PageModel[] pages;
     public String name;
-    public TagModel(String name, Page[] pages){
+    public TagModel(String name, PageModel[] pages){
         this.id = pages[0].data;
         this.id = this.id << 4*8;
         this.id = this.id | pages[1].data;
@@ -17,7 +17,7 @@ public class TagModel {
     public void setName(String name){
         this.name = name;
     }
-    public void setPages(Page[] pages){
+    public void setPages(PageModel[] pages){
         this.id = pages[0].data;
         this.id = this.id << 4*8;
         this.id = this.id | pages[1].data;
