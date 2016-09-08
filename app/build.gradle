@@ -7,8 +7,8 @@ android {
         applicationId "net.peterme.mifareultralightcardresetter"
         minSdkVersion 16
         targetSdkVersion 24
-        versionCode 3
-        versionName '2.0'
+        versionCode 6
+        versionName '2.2'
     }
     buildTypes {
         release {

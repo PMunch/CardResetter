@@ -64,6 +64,7 @@ public class TagStore {
                 for (c.moveToFirst(); !c.isAfterLast(); c.moveToNext()) {
                     pages[c.getPosition()] = new PageModel(c.getInt(iLocked) == 0 ? false : true, c.getInt(iData));
                 }
+                c.close();
                 TagModel tag = new TagModel("Tag", pages);
                 db.execSQL("DROP TABLE IF EXISTS TagTable");
                 onCreate(db);
@@ -161,7 +162,7 @@ public class TagStore {
     }
     public TagModel[] getAllTags(){
         Cursor c = database.query(DATABASE_TABLE_CARD, COLUMNS_TAG, null, null, null, null ,null);
-        TagModel[] tags = new TagModel[c.getColumnCount()];
+        TagModel[] tags = new TagModel[c.getCount()];
         for(c.moveToFirst();!c.isAfterLast();c.moveToNext()){
             Cursor c2 = database.query(DATABASE_TABLE_PAGE, COLUMNS_PAGE, KEY_CARDID + "=?", new String[] {Long.toString(c.getLong(0))}, null, null, KEY_ROWID, null);
             PageModel[] pages = new PageModel[16];
@@ -169,7 +170,9 @@ public class TagStore {
                 pages[c2.getPosition()] = new PageModel(c2.getInt(2)==0 ? false : true, c2.getInt(3));
             }
             tags[c.getPosition()] = new TagModel(c.getString(1),pages);
+            c2.close();
         }
+        c.close();
         return tags;
     }
 	public void deleteTag(long tagId) {
