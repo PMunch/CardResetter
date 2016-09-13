@@ -43,7 +43,7 @@ public class RewriteActivity extends Activity {
             ByteBuffer wrappedPayload = ByteBuffer.wrap(payload);
             long scannedId = wrappedPayload.getInt(0);
             scannedId = scannedId << 4*8;
-            scannedId = scannedId | wrappedPayload.getInt(4);
+            scannedId = scannedId | (0x00000000ffffffffL & wrappedPayload.getInt(4));
             tagStore.open();
             TagModel tag = tagStore.getTag(scannedId);
             tagStore.close();

@@ -304,7 +304,7 @@ public class MainActivity extends AppCompatActivity {
                 if(wrappedPayload!=null){
                     long scannedId = wrappedPayload.getInt(0);
                     scannedId = scannedId << 4*8;
-                    scannedId = scannedId | wrappedPayload.getInt(4);
+                    scannedId = scannedId | (0x00000000ffffffffL & wrappedPayload.getInt(4));
                     if(scannedId == currentTag.id){
                         for(int i=3;i<16;i++){
                             if(!currentTag.pages[i].locked)
