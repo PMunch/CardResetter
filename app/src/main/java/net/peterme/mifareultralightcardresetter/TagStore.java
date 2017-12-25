@@ -14,8 +14,8 @@ public class TagStore {
     public static final String KEY_ROWID = "_id";
     public static final String KEY_LOCKED = "locked";
     public static final String KEY_DATA = "data";
-    public static final String[] COLUMNS_PAGE ={KEY_CARDID,KEY_ROWID,KEY_LOCKED,KEY_DATA};
-    public static final String[] COLUMNS_TAG ={KEY_CARDID,KEY_CARDNAME};
+    public static final String[] COLUMNS_PAGE = { KEY_CARDID, KEY_ROWID, KEY_LOCKED, KEY_DATA };
+    public static final String[] COLUMNS_TAG = { KEY_CARDID, KEY_CARDNAME };
 
     private static final String DATABASE_NAME = "TagDB";
 
@@ -27,7 +27,7 @@ public class TagStore {
     private final Context ourContext;
     private SQLiteDatabase database;
 
-    private static class DbHelper extends SQLiteOpenHelper{
+    private static class DbHelper extends SQLiteOpenHelper {
         public DbHelper(Context context) {
             super(context, DATABASE_NAME, null, DATABASE_VERSION);
             // TODO Auto-generated constructor stub
@@ -35,18 +35,12 @@ public class TagStore {
 
         @Override
         public void onCreate(SQLiteDatabase db) {
-            db.execSQL("CREATE TABLE " + DATABASE_TABLE_CARD + " (" +
-                    KEY_CARDID +        " LONG PRIMARY KEY, " +
-                    KEY_CARDNAME + 			" TEXT);"
-            );
+            db.execSQL("CREATE TABLE " + DATABASE_TABLE_CARD + " (" + KEY_CARDID + " LONG PRIMARY KEY, " + KEY_CARDNAME
+                    + " TEXT);");
 
-            db.execSQL("CREATE TABLE " + DATABASE_TABLE_PAGE + " (" +
-                    KEY_CARDID +        " LONG, " +
-                    KEY_ROWID + 		" INTEGER PRIMARY KEY AUTOINCREMENT, " +
-                    KEY_LOCKED + 		" INTEGER, " +
-                    KEY_DATA + 			" INTEGER, "+
-                    "FOREIGN KEY (" + KEY_CARDID + ") REFERENCES " + DATABASE_TABLE_CARD + "(" + KEY_CARDID + "));"
-            );
+            db.execSQL("CREATE TABLE " + DATABASE_TABLE_PAGE + " (" + KEY_CARDID + " LONG, " + KEY_ROWID
+                    + " INTEGER PRIMARY KEY AUTOINCREMENT, " + KEY_LOCKED + " INTEGER, " + KEY_DATA + " INTEGER, "
+                    + "FOREIGN KEY (" + KEY_CARDID + ") REFERENCES " + DATABASE_TABLE_CARD + "(" + KEY_CARDID + "));");
         }
 
         @Override
@@ -57,7 +51,7 @@ public class TagStore {
             //Log.d("upgrade","SQL table drops on upgrade");
             // onCreate(db);
             try {
-                Cursor c = db.query("TagTable", new String[]{"_id", "locked", "data"}, null, null, null, null, null);
+                Cursor c = db.query("TagTable", new String[] { "_id", "locked", "data" }, null, null, null, null, null);
                 PageModel[] pages = new PageModel[16];
                 int iLocked = c.getColumnIndex("locked");
                 int iData = c.getColumnIndex("data");
@@ -82,7 +76,7 @@ public class TagStore {
                 cv.put(KEY_CARDID, tag.id);
                 cv.put(KEY_CARDNAME, tag.name);
                 db.insert(DATABASE_TABLE_CARD, null, cv);
-            }catch (SQLException e){
+            } catch (SQLException e) {
                 db.execSQL("DROP TABLE IF EXISTS TagTable");
                 db.execSQL("DROP TABLE IF EXISTS " + DATABASE_TABLE_CARD);
                 db.execSQL("DROP TABLE IF EXISTS " + DATABASE_TABLE_PAGE);
@@ -91,10 +85,12 @@ public class TagStore {
         }
 
     }
-    public TagStore(Context c){
+
+    public TagStore(Context c) {
         ourContext = c;
     }
-    public TagStore open() throws SQLException{
+
+    public TagStore open() throws SQLException {
         helper = new DbHelper(ourContext);
         database = helper.getWritableDatabase();
         //database.execSQL("DROP TABLE IF EXISTS " + DATABASE_TABLE_CARD);
@@ -102,24 +98,26 @@ public class TagStore {
         return this;
 
     }
-    public TagStore close(){
+
+    public TagStore close() {
         helper.close();
         return this;
     }
+
     /*public long createEntry(Boolean locked, String alias) {
         ContentValues cv = new ContentValues();
         cv.put(KEY_ALIAS, alias);
         cv.put(KEY_DESTINATION, destination);
         return database.insert(tagUUID, null, cv);
     }*/
-    public int setTag(TagModel tag){
+    public int setTag(TagModel tag) {
         //database.execSQL("DROP TABLE IF EXISTS " + DATABASE_TABLE);
         //helper.onCreate(database);
 
         ContentValues cv = new ContentValues();
         int retval = 1;
 
-        for(int i=0;i<tag.pages.length;i++){
+        for (int i = 0; i < tag.pages.length; i++) {
             cv.clear();
             cv.put(KEY_LOCKED, tag.pages[i].locked);
             cv.put(KEY_DATA, tag.pages[i].data);
@@ -134,11 +132,13 @@ public class TagStore {
 
         return retval;
     }
+
     public TagModel getTag(long tagid) {
         //Cursor c = database.query(DATABASE_TABLE_CARD, columns, null, null, null, null ,null);
         //String iCardName = c.getColumnIndex(KEY_CARDNAME);
         //long iCardID = c.getColumnIndex(KEY_CARDID);
-        Cursor c = database.query(DATABASE_TABLE_CARD, COLUMNS_TAG, KEY_CARDID + "=?", new String[] {Long.toString(tagid)}, null, null, null, null);
+        Cursor c = database.query(DATABASE_TABLE_CARD, COLUMNS_TAG, KEY_CARDID + "=?",
+                new String[] { Long.toString(tagid) }, null, null, null, null);
 
         String name = null;
         if (c.moveToFirst()) {
@@ -148,35 +148,39 @@ public class TagStore {
         }
         c.close();
 
-        if(name!=null){
+        if (name != null) {
             PageModel[] pages = new PageModel[16];
-            c = database.query(DATABASE_TABLE_PAGE, COLUMNS_PAGE, KEY_CARDID + "=?", new String[] {Long.toString(tagid)}, null, null, KEY_ROWID, null);
+            c = database.query(DATABASE_TABLE_PAGE, COLUMNS_PAGE, KEY_CARDID + "=?",
+                    new String[] { Long.toString(tagid) }, null, null, KEY_ROWID, null);
             int iLocked = c.getColumnIndex(KEY_LOCKED);
             int iData = c.getColumnIndex(KEY_DATA);
-            for(c.moveToFirst();!c.isAfterLast();c.moveToNext()){
-                pages[c.getPosition()] = new PageModel(c.getInt(iLocked)==0 ? false : true, c.getInt(iData));
+            for (c.moveToFirst(); !c.isAfterLast(); c.moveToNext()) {
+                pages[c.getPosition()] = new PageModel(c.getInt(iLocked) == 0 ? false : true, c.getInt(iData));
             }
-            return new TagModel(name,pages);
+            return new TagModel(name, pages);
         }
         return null;
     }
-    public TagModel[] getAllTags(){
-        Cursor c = database.query(DATABASE_TABLE_CARD, COLUMNS_TAG, null, null, null, null ,null);
+
+    public TagModel[] getAllTags() {
+        Cursor c = database.query(DATABASE_TABLE_CARD, COLUMNS_TAG, null, null, null, null, null);
         TagModel[] tags = new TagModel[c.getCount()];
-        for(c.moveToFirst();!c.isAfterLast();c.moveToNext()){
-            Cursor c2 = database.query(DATABASE_TABLE_PAGE, COLUMNS_PAGE, KEY_CARDID + "=?", new String[] {Long.toString(c.getLong(0))}, null, null, KEY_ROWID, null);
+        for (c.moveToFirst(); !c.isAfterLast(); c.moveToNext()) {
+            Cursor c2 = database.query(DATABASE_TABLE_PAGE, COLUMNS_PAGE, KEY_CARDID + "=?",
+                    new String[] { Long.toString(c.getLong(0)) }, null, null, KEY_ROWID, null);
             PageModel[] pages = new PageModel[16];
-            for(c2.moveToFirst();!c2.isAfterLast();c2.moveToNext()){
-                pages[c2.getPosition()] = new PageModel(c2.getInt(2)==0 ? false : true, c2.getInt(3));
+            for (c2.moveToFirst(); !c2.isAfterLast(); c2.moveToNext()) {
+                pages[c2.getPosition()] = new PageModel(c2.getInt(2) == 0 ? false : true, c2.getInt(3));
             }
-            tags[c.getPosition()] = new TagModel(c.getString(1),pages);
+            tags[c.getPosition()] = new TagModel(c.getString(1), pages);
             c2.close();
         }
         c.close();
         return tags;
     }
-	public void deleteTag(long tagId) {
-		database.delete(DATABASE_TABLE_PAGE, KEY_CARDID+"=?", new String[] {Long.toString(tagId)});
-        database.delete(DATABASE_TABLE_CARD, KEY_CARDID+"=?", new String[] {Long.toString(tagId)});
-	}
+
+    public void deleteTag(long tagId) {
+        database.delete(DATABASE_TABLE_PAGE, KEY_CARDID + "=?", new String[] { Long.toString(tagId) });
+        database.delete(DATABASE_TABLE_CARD, KEY_CARDID + "=?", new String[] { Long.toString(tagId) });
+    }
 }
