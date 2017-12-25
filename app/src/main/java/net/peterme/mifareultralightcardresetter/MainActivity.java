@@ -33,6 +33,8 @@ import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
 
+    private static final String LOGTAG = "MifareCardResetterMainActivity";
+
     final Context context = this;
     final Activity activity = this;
     private NfcAdapter mAdapter;
@@ -263,7 +265,7 @@ public class MainActivity extends AppCompatActivity {
                         pages[i + j] = new PageModel(lockbits[i - 3 + j], wrappedPayload.getInt(j * 4));
                 }
                 currentTag.setPages(pages);
-                Log.d("TAG", "Card id: " + Long.toHexString(currentTag.id));
+                Log.d(LOGTAG, "Card id: " + Long.toHexString(currentTag.id));
                 logPages(pages);
                 mifare.close();
                 tagStore.open();
@@ -286,14 +288,14 @@ public class MainActivity extends AppCompatActivity {
                 }
                 tagStore.close();
             } catch (IOException e) {
-                Log.e("TAG", "Error", e);
+                Log.e(LOGTAG, "Error", e);
                 ((TextView) addTagDialog.findViewById(R.id.tagStatus)).setText(getText(R.string.tag_scanned_error));
                 ((TextView) addTagDialog.findViewById(R.id.tagStatus)).setCompoundDrawablesWithIntrinsicBounds(
                         getResources().getDrawable(R.drawable.ic_tap_and_play_black_24dp), null, null, null);
                 addTagDialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(false);
                 currentTag = null;
             } catch (NullPointerException e) {
-                Log.e("TAG", "Error", e);
+                Log.e(LOGTAG, "Error", e);
                 ((TextView) addTagDialog.findViewById(R.id.tagStatus)).setText(getText(R.string.tag_scanned_error));
                 ((TextView) addTagDialog.findViewById(R.id.tagStatus)).setCompoundDrawablesWithIntrinsicBounds(
                         getResources().getDrawable(R.drawable.ic_tap_and_play_black_24dp), null, null, null);
@@ -376,18 +378,18 @@ public class MainActivity extends AppCompatActivity {
 
     public void logPages(PageModel[] pages) {
         for (int i = 0; i < pages.length; i++) {
-            Log.d("TAG", "Page #" + i + " is " + (pages[i].locked ? "locked" : "un-locked") + " and contains data "
+            Log.d(LOGTAG, "Page #" + i + " is " + (pages[i].locked ? "locked" : "un-locked") + " and contains data "
                     + Integer.toHexString(pages[i].data));
         }
     }
 
     public void logTags(TagModel[] tags) {
-        Log.d("TAG", "Dump of all tags:");
+        Log.d(LOGTAG, "Dump of all tags:");
         for (int ii = 0; ii < tags.length; ii++) {
-            Log.d("TAG", "Tag " + ii);
+            Log.d(LOGTAG, "Tag " + ii);
             if (tags[ii] != null) {
-                Log.d("TAG", "name: " + tags[ii].name);
-                Log.d("TAG", "id: " + Long.toHexString(tags[ii].id));
+                Log.d(LOGTAG, "name: " + tags[ii].name);
+                Log.d(LOGTAG, "id: " + Long.toHexString(tags[ii].id));
                 logPages(tags[ii].pages);
             }
         }
