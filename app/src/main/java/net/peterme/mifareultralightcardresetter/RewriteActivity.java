@@ -14,6 +14,7 @@ import android.nfc.Tag;
 import android.nfc.tech.MifareUltralight;
 import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
 
 public class RewriteActivity extends Activity {
     private byte[] payload;
@@ -33,7 +34,7 @@ public class RewriteActivity extends Activity {
 
         Intent intent = this.getIntent();
 
-        Tag t = (Tag) intent.getParcelableExtra(NfcAdapter.EXTRA_TAG);
+        Tag t = intent.getParcelableExtra(NfcAdapter.EXTRA_TAG);
         final MifareUltralight mifare = MifareUltralight.get(t);
         try {
             mifare.connect();
@@ -75,6 +76,7 @@ public class RewriteActivity extends Activity {
             }
             mifare.close();
         } catch (IOException e) {
+            Log.e("NFC Tag Reset Error", "I/O Exception", e);
             noti = new Notification.Builder(this).setContentTitle(getString(R.string.state_error_short))
                     .setContentText(getString(R.string.state_error)).setSmallIcon(R.drawable.ic_stat_notify_icon)
                     .build();
