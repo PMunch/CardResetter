@@ -14,6 +14,7 @@ import android.nfc.Tag;
 import android.nfc.tech.MifareUltralight;
 import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
 
 public class RewriteActivity extends Activity {
     private byte[] payload;
