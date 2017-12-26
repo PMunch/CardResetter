@@ -107,15 +107,15 @@ public class MainActivity extends AppCompatActivity {
                 addTagDialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
                     @Override
                     public void onDismiss(DialogInterface dialogInterface) {
-                        Log.d("Dialog", "dismissed!");
+                        Log.d("AddTagDialog", "dismissed!");
                         addTagDialog = null;
                         mAdapter.disableForegroundDispatch(activity);
                         currentTag = null;
                     }
                 });
                 mAdapter.enableForegroundDispatch(activity, pendingIntent, mFilters, mTechLists);
-                /*Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();*/
+                // Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
+                //        .setAction("Action", null).show();*/
             }
         });
 
@@ -130,7 +130,7 @@ public class MainActivity extends AppCompatActivity {
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-                Log.d("Dialog", "Item selected! ");
+                Log.d(LOGTAG, "Item selected! ");
                 AlertDialog.Builder builder = new AlertDialog.Builder(context);
                 builder.setView(R.layout.activity_rewrite_tag_dialog);
                 rewriteTagDialog = builder.create();
@@ -138,7 +138,7 @@ public class MainActivity extends AppCompatActivity {
                 rewriteTagDialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
                     @Override
                     public void onDismiss(DialogInterface dialogInterface) {
-                        Log.d("Dialog", "dismissed!");
+                        Log.d("RewriteTagDialog", "dismissed!");
                         rewriteTagDialog = null;
                         currentTag = null;
                         mAdapter.disableForegroundDispatch(activity);
@@ -229,7 +229,7 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public void onNewIntent(Intent intent) {
-        Tag t = (Tag) intent.getParcelableExtra(NfcAdapter.EXTRA_TAG);
+        Tag t = intent.getParcelableExtra(NfcAdapter.EXTRA_TAG);
         final MifareUltralight mifare = MifareUltralight.get(t);
 
         if (addTagDialog != null) {
@@ -239,7 +239,7 @@ public class MainActivity extends AppCompatActivity {
                 mifare.connect();
                 PageModel[] pages = new PageModel[16];
                 ByteBuffer wrappedPayload;
-                Boolean[] lockbits = {};
+                Boolean[] lockbits;
                 int pageCount;
                 switch (mifare.getType()) {
                 case MifareUltralight.TYPE_ULTRALIGHT:
@@ -288,14 +288,14 @@ public class MainActivity extends AppCompatActivity {
                 }
                 tagStore.close();
             } catch (IOException e) {
-                Log.e(LOGTAG, "Error", e);
+                Log.e("NfcScan", "I/O Exception while scanning NFC Tag", e);
                 ((TextView) addTagDialog.findViewById(R.id.tagStatus)).setText(getText(R.string.tag_scanned_error));
                 ((TextView) addTagDialog.findViewById(R.id.tagStatus)).setCompoundDrawablesWithIntrinsicBounds(
                         getResources().getDrawable(R.drawable.ic_tap_and_play_black_24dp), null, null, null);
                 addTagDialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(false);
                 currentTag = null;
             } catch (NullPointerException e) {
-                Log.e(LOGTAG, "Error", e);
+                Log.e("NfcScan", "Null Reference Exception while scanning NFC Tag", e);
                 ((TextView) addTagDialog.findViewById(R.id.tagStatus)).setText(getText(R.string.tag_scanned_error));
                 ((TextView) addTagDialog.findViewById(R.id.tagStatus)).setCompoundDrawablesWithIntrinsicBounds(
                         getResources().getDrawable(R.drawable.ic_tap_and_play_black_24dp), null, null, null);
@@ -332,6 +332,7 @@ public class MainActivity extends AppCompatActivity {
                                             getResources().getDrawable(R.drawable.ic_done_black_24dp), null, null,
                                             null);
                         } else {
+                            Log.e("NfcRewrite", "NFC Tag data not equal to stored data after rewrite");
                             ((TextView) rewriteTagDialog.findViewById(R.id.tagStatus))
                                     .setText(getText(R.string.tag_rewrite_error));
                             ((TextView) rewriteTagDialog.findViewById(R.id.tagStatus))
@@ -348,6 +349,7 @@ public class MainActivity extends AppCompatActivity {
                                         null);
                     }
                 } else {
+                    Log.e("NfcScan", "Wrapped payload scanned from NFC Tag is null.");
                     ((TextView) rewriteTagDialog.findViewById(R.id.tagStatus))
                             .setText(getText(R.string.tag_rewrite_error));
                     ((TextView) rewriteTagDialog.findViewById(R.id.tagStatus)).setCompoundDrawablesWithIntrinsicBounds(
@@ -355,14 +357,14 @@ public class MainActivity extends AppCompatActivity {
                 }
                 mifare.close();
             } catch (IOException e) {
-                Log.e(LOGTAG, "I/O Error during NFC Tag reset", e);
+                Log.e("NfcRewrite", "I/O Error during NFC Tag reset", e);
                 ((TextView) rewriteTagDialog.findViewById(R.id.tagStatus)).setText(getText(R.string.tag_rewrite_error));
                 ((TextView) rewriteTagDialog.findViewById(R.id.tagStatus)).setCompoundDrawablesWithIntrinsicBounds(
                         getResources().getDrawable(R.drawable.ic_tap_and_play_black_24dp), null, null, null);
             }
 
         } else {
-            Log.d("Intent", "Somethings not right");
+            Log.d("Intent", "Something is not right");
         }
     }
 
@@ -378,19 +380,26 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void logPages(PageModel[] pages) {
+        StringBuilder msgBuilder = new StringBuilder();
         for (int i = 0; i < pages.length; i++) {
-            Log.d(LOGTAG, "Page #" + i + " is " + (pages[i].locked ? "locked" : "un-locked") + " and contains data "
-                    + Integer.toHexString(pages[i].data));
+            msgBuilder.setLength(0);
+            msgBuilder.append("Page #");
+            msgBuilder.append(i);
+            msgBuilder.append(" is ");
+            msgBuilder.append(pages[i].locked ? "locked" : "un-locked");
+            msgBuilder.append(" and contains data");
+            msgBuilder.append(Integer.toHexString(pages[i].data));
+            Log.d("TagStoreLog", msgBuilder.toString());
         }
     }
 
     public void logTags(TagModel[] tags) {
-        Log.d(LOGTAG, "Dump of all tags:");
+        Log.d("TagStoreLog", "Dump of all tags:");
         for (int ii = 0; ii < tags.length; ii++) {
-            Log.d(LOGTAG, "Tag " + ii);
+            Log.d("TagStoreLog", "Tag " + ii);
             if (tags[ii] != null) {
-                Log.d(LOGTAG, "name: " + tags[ii].name);
-                Log.d(LOGTAG, "id: " + Long.toHexString(tags[ii].id));
+                Log.d("TagStoreLog", "name: " + tags[ii].name);
+                Log.d("TagStoreLog", "id: " + Long.toHexString(tags[ii].id));
                 logPages(tags[ii].pages);
             }
         }
