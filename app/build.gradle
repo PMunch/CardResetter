@@ -4,8 +4,9 @@ android {
     compileSdkVersion 24
     defaultConfig {
         applicationId "net.peterme.mifareultralightcardresetter"
-        minSdkVersion 16
-        targetSdkVersion 27
+        minSdkVersion 17
+        //noinspection OldTargetApi
+        targetSdkVersion 17
         versionCode 6
         versionName '2.3'
     }
