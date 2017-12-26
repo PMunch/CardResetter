@@ -14,6 +14,7 @@ import android.nfc.Tag;
 import android.nfc.tech.MifareUltralight;
 import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
 
 public class RewriteActivity extends Activity {
     private byte[] payload;
@@ -26,6 +27,7 @@ public class RewriteActivity extends Activity {
 
     private static final String PREFS = "MyPrefs";
 
+    private static final String TAG = "NfcTagReset";
 
     @Override
     public void onCreate(Bundle savedInstanceState){
@@ -83,6 +85,7 @@ public class RewriteActivity extends Activity {
             }
             mifare.close();
         }catch(IOException e){
+            Log.e(TAG, "I/O Error during NFC Tag reset", e);
             noti = new Notification.Builder(this)
                     .setContentTitle(getString(R.string.state_error_short))
                     .setContentText(getString(R.string.state_error))
