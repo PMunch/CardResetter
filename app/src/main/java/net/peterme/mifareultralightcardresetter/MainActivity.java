@@ -231,6 +231,7 @@ public class MainActivity extends AppCompatActivity {
     public void onNewIntent(Intent intent) {
         Tag t = intent.getParcelableExtra(NfcAdapter.EXTRA_TAG);
         final MifareUltralight mifare = MifareUltralight.get(t);
+        TextView tagStatusTextView;
 
         if (addTagDialog != null) {
             currentTag = new TagModel();
@@ -265,40 +266,52 @@ public class MainActivity extends AppCompatActivity {
                         pages[i + j] = new PageModel(lockbits[i - 3 + j], wrappedPayload.getInt(j * 4));
                 }
                 currentTag.setPages(pages);
-                Log.d(LOGTAG, "Card id: " + Long.toHexString(currentTag.id));
+                Log.d("NfcScan", "Card id: " + Long.toHexString(currentTag.id));
                 logPages(pages);
                 mifare.close();
                 tagStore.open();
+
                 if (tagStore.getTag(currentTag.id) == null) {
-                    ((TextView) addTagDialog.findViewById(R.id.tagStatus))
-                            .setText(getText(R.string.tag_scanned_successfully));
-                    ((TextView) addTagDialog.findViewById(R.id.tagStatus)).setCompoundDrawablesWithIntrinsicBounds(
-                            getResources().getDrawable(R.drawable.ic_done_black_24dp), null, null, null);
-                    if (!((EditText) addTagDialog.findViewById(R.id.editText)).getText().toString().equals("")) {
-                        currentTag.setName(((EditText) addTagDialog.findViewById(R.id.editText)).getText().toString());
+                    tagStatusTextView = (TextView) addTagDialog.findViewById(R.id.tagStatus);
+                    tagStatusTextView.setText(getText(R.string.tag_scanned_successfully));
+                    tagStatusTextView.setCompoundDrawablesWithIntrinsicBounds(
+                            getDrawable(R.drawable.ic_done_black_24dp),
+                            null, null, null
+                    );
+                    EditText tagStatusEditText = (EditText) addTagDialog.findViewById(R.id.editText);
+                    if (!tagStatusEditText.getText().toString().equals("")) {
+                        currentTag.setName(tagStatusEditText.getText().toString());
                         addTagDialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(true);
                     }
                 } else {
-                    ((TextView) addTagDialog.findViewById(R.id.tagStatus))
-                            .setText(getText(R.string.tag_scanned_duplicate));
-                    ((TextView) addTagDialog.findViewById(R.id.tagStatus)).setCompoundDrawablesWithIntrinsicBounds(
-                            getResources().getDrawable(R.drawable.ic_tap_and_play_black_24dp), null, null, null);
+                    tagStatusTextView = (TextView) addTagDialog.findViewById(R.id.tagStatus);
+                    tagStatusTextView.setText(getText(R.string.tag_scanned_duplicate));
+                    tagStatusTextView.setCompoundDrawablesWithIntrinsicBounds(
+                            getDrawable(R.drawable.ic_tap_and_play_black_24dp),
+                            null, null, null
+                    );
                     addTagDialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(false);
                     currentTag = null;
                 }
                 tagStore.close();
             } catch (IOException e) {
                 Log.e("NfcScan", "I/O Exception while scanning NFC Tag", e);
-                ((TextView) addTagDialog.findViewById(R.id.tagStatus)).setText(getText(R.string.tag_scanned_error));
-                ((TextView) addTagDialog.findViewById(R.id.tagStatus)).setCompoundDrawablesWithIntrinsicBounds(
-                        getResources().getDrawable(R.drawable.ic_tap_and_play_black_24dp), null, null, null);
+                tagStatusTextView = (TextView) addTagDialog.findViewById(R.id.tagStatus);
+                tagStatusTextView.setText(getText(R.string.tag_scanned_error));
+                tagStatusTextView.setCompoundDrawablesWithIntrinsicBounds(
+                        getDrawable(R.drawable.ic_tap_and_play_black_24dp),
+                        null, null, null
+                );
                 addTagDialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(false);
                 currentTag = null;
             } catch (NullPointerException e) {
                 Log.e("NfcScan", "Null Reference Exception while scanning NFC Tag", e);
-                ((TextView) addTagDialog.findViewById(R.id.tagStatus)).setText(getText(R.string.tag_scanned_error));
-                ((TextView) addTagDialog.findViewById(R.id.tagStatus)).setCompoundDrawablesWithIntrinsicBounds(
-                        getResources().getDrawable(R.drawable.ic_tap_and_play_black_24dp), null, null, null);
+                tagStatusTextView = (TextView) addTagDialog.findViewById(R.id.tagStatus);
+                tagStatusTextView.setText(getText(R.string.tag_scanned_error));
+                tagStatusTextView.setCompoundDrawablesWithIntrinsicBounds(
+                        getDrawable(R.drawable.ic_tap_and_play_black_24dp),
+                        null, null, null
+                );
                 addTagDialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(false);
                 currentTag = null;
             }
@@ -325,42 +338,47 @@ public class MainActivity extends AppCompatActivity {
                             }
                         }
                         if (correct) {
-                            ((TextView) rewriteTagDialog.findViewById(R.id.tagStatus))
-                                    .setText(getText(R.string.tag_rewrite_success));
-                            ((TextView) rewriteTagDialog.findViewById(R.id.tagStatus))
-                                    .setCompoundDrawablesWithIntrinsicBounds(
-                                            getResources().getDrawable(R.drawable.ic_done_black_24dp), null, null,
-                                            null);
+                            tagStatusTextView = (TextView) rewriteTagDialog.findViewById(R.id.tagStatus);
+                            tagStatusTextView.setText(getText(R.string.tag_rewrite_success));
+                            tagStatusTextView.setCompoundDrawablesWithIntrinsicBounds(
+                                    getDrawable(R.drawable.ic_done_black_24dp),
+                                    null, null, null
+                            );
                         } else {
                             Log.e("NfcRewrite", "NFC Tag data not equal to stored data after rewrite");
-                            ((TextView) rewriteTagDialog.findViewById(R.id.tagStatus))
-                                    .setText(getText(R.string.tag_rewrite_error));
-                            ((TextView) rewriteTagDialog.findViewById(R.id.tagStatus))
-                                    .setCompoundDrawablesWithIntrinsicBounds(
-                                            getResources().getDrawable(R.drawable.ic_tap_and_play_black_24dp), null,
-                                            null, null);
+                            tagStatusTextView = (TextView) rewriteTagDialog.findViewById(R.id.tagStatus);
+                            tagStatusTextView.setText(getText(R.string.tag_rewrite_error));
+                            tagStatusTextView.setCompoundDrawablesWithIntrinsicBounds(
+                                    getDrawable(R.drawable.ic_tap_and_play_black_24dp),
+                                    null, null, null
+                            );
                         }
                     } else {
-                        ((TextView) rewriteTagDialog.findViewById(R.id.tagStatus))
-                                .setText(getText(R.string.tag_rewrite_notsame));
-                        ((TextView) rewriteTagDialog.findViewById(R.id.tagStatus))
-                                .setCompoundDrawablesWithIntrinsicBounds(
-                                        getResources().getDrawable(R.drawable.ic_tap_and_play_black_24dp), null, null,
-                                        null);
+                        tagStatusTextView = (TextView) rewriteTagDialog.findViewById(R.id.tagStatus);
+                        tagStatusTextView.setText(getText(R.string.tag_rewrite_notsame));
+                        tagStatusTextView.setCompoundDrawablesWithIntrinsicBounds(
+                                getDrawable(R.drawable.ic_tap_and_play_black_24dp),
+                                null, null, null
+                        );
                     }
                 } else {
                     Log.e("NfcScan", "Wrapped payload scanned from NFC Tag is null.");
-                    ((TextView) rewriteTagDialog.findViewById(R.id.tagStatus))
-                            .setText(getText(R.string.tag_rewrite_error));
-                    ((TextView) rewriteTagDialog.findViewById(R.id.tagStatus)).setCompoundDrawablesWithIntrinsicBounds(
-                            getResources().getDrawable(R.drawable.ic_tap_and_play_black_24dp), null, null, null);
+                    tagStatusTextView = (TextView) rewriteTagDialog.findViewById(R.id.tagStatus);
+                    tagStatusTextView.setText(getText(R.string.tag_rewrite_error));
+                    tagStatusTextView.setCompoundDrawablesWithIntrinsicBounds(
+                            getDrawable(R.drawable.ic_tap_and_play_black_24dp),
+                            null, null, null
+                    );
                 }
                 mifare.close();
             } catch (IOException e) {
                 Log.e("NfcRewrite", "I/O Error during NFC Tag reset", e);
-                ((TextView) rewriteTagDialog.findViewById(R.id.tagStatus)).setText(getText(R.string.tag_rewrite_error));
-                ((TextView) rewriteTagDialog.findViewById(R.id.tagStatus)).setCompoundDrawablesWithIntrinsicBounds(
-                        getResources().getDrawable(R.drawable.ic_tap_and_play_black_24dp), null, null, null);
+                tagStatusTextView = (TextView) rewriteTagDialog.findViewById(R.id.tagStatus);
+                tagStatusTextView.setText(getText(R.string.tag_rewrite_error));
+                tagStatusTextView.setCompoundDrawablesWithIntrinsicBounds(
+                        getDrawable(R.drawable.ic_tap_and_play_black_24dp),
+                        null, null, null
+                );
             }
 
         } else {
