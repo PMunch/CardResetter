@@ -33,7 +33,7 @@ import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
 
-    private static final String LOGTAG = "MifareCardResetterMainActivity";
+    private static final String LOGTAG = "MainActivity";
 
     final Context context = this;
     final Activity activity = this;
@@ -355,6 +355,7 @@ public class MainActivity extends AppCompatActivity {
                 }
                 mifare.close();
             } catch (IOException e) {
+                Log.e(LOGTAG, "I/O Error during NFC Tag reset", e);
                 ((TextView) rewriteTagDialog.findViewById(R.id.tagStatus)).setText(getText(R.string.tag_rewrite_error));
                 ((TextView) rewriteTagDialog.findViewById(R.id.tagStatus)).setCompoundDrawablesWithIntrinsicBounds(
                         getResources().getDrawable(R.drawable.ic_tap_and_play_black_24dp), null, null, null);

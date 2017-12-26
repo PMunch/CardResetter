@@ -26,7 +26,7 @@ public class RewriteActivity extends Activity {
 
     private static final String PREFS = "MyPrefs";
 
-    private static final String LOGTAG = "MifareCardResetterRewriteActivity";
+    private static final String LOGTAG = "RewriteActivity";
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
