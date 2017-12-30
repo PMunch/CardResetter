@@ -32,9 +32,6 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
-
-    private static final String LOGTAG = "MainActivity";
-
     final Context context = this;
     final Activity activity = this;
     private NfcAdapter mAdapter;
@@ -130,7 +127,7 @@ public class MainActivity extends AppCompatActivity {
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-                Log.d(LOGTAG, "Item selected! ");
+                Log.d("NfcTagList", "Item selected! ");
                 AlertDialog.Builder builder = new AlertDialog.Builder(context);
                 builder.setView(R.layout.activity_rewrite_tag_dialog);
                 rewriteTagDialog = builder.create();
